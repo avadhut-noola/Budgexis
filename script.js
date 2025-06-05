@@ -42,18 +42,29 @@ function setupEventListeners() {
     });
 }
 
+// Format currency in Indian Rupees
+function formatCurrency(amount) {
+    return `₹${amount.toLocaleString('en-IN')}`;
+}
+
+// Round amount to nearest 10
+function roundToTen(amount) {
+    return Math.round(amount / 10) * 10;
+}
+
 // Add income item
 function addIncome() {
     const desc = document.getElementById('income-desc').value.trim();
     const amount = parseFloat(document.getElementById('income-amount').value);
     
     if (desc && amount && amount > 0) {
-        incomeItems.push({ desc, amount, id: Date.now() });
+        const roundedAmount = roundToTen(amount);
+        incomeItems.push({ desc, amount: roundedAmount, id: Date.now() });
         document.getElementById('income-desc').value = '';
         document.getElementById('income-amount').value = '';
         updateDisplay();
     } else {
-        alert('Please enter a valid description and amount.');
+        alert('Please enter a valid description and amount (minimum ₹10).');
     }
 }
 
@@ -64,12 +75,13 @@ function addExpense() {
     const category = document.getElementById('expense-category').value;
     
     if (desc && amount && amount > 0) {
-        expenseItems.push({ desc, amount, category, id: Date.now() });
+        const roundedAmount = roundToTen(amount);
+        expenseItems.push({ desc, amount: roundedAmount, category, id: Date.now() });
         document.getElementById('expense-desc').value = '';
         document.getElementById('expense-amount').value = '';
         updateDisplay();
     } else {
-        alert('Please enter a valid description and amount.');
+        alert('Please enter a valid description and amount (minimum ₹10).');
     }
 }
 
@@ -102,7 +114,7 @@ function updateIncomeList() {
         incomeList.innerHTML = incomeItems.map(item => 
             `<div class="item income">
                 <span><strong>${item.desc}</strong></span>
-                <span>$${item.amount.toFixed(2)} <button class="delete-btn" onclick="deleteIncome(${item.id})">×</button></span>
+                <span>${formatCurrency(item.amount)} <button class="delete-btn" onclick="deleteIncome(${item.id})">×</button></span>
             </div>`
         ).join('');
     }
@@ -117,7 +129,7 @@ function updateExpenseList() {
         expenseList.innerHTML = expenseItems.map(item => 
             `<div class="item ${item.category}">
                 <span><strong>${item.desc}</strong> <small>(${item.category})</small></span>
-                <span>$${item.amount.toFixed(2)} <button class="delete-btn" onclick="deleteExpense(${item.id})">×</button></span>
+                <span>${formatCurrency(item.amount)} <button class="delete-btn" onclick="deleteExpense(${item.id})">×</button></span>
             </div>`
         ).join('');
     }
@@ -129,9 +141,9 @@ function updateSummary() {
     const totalExpenses = expenseItems.reduce((sum, item) => sum + item.amount, 0);
     const netBalance = totalIncome - totalExpenses;
 
-    document.getElementById('total-income').textContent = `$${totalIncome.toFixed(2)}`;
-    document.getElementById('total-expenses').textContent = `$${totalExpenses.toFixed(2)}`;
-    document.getElementById('net-balance').textContent = `$${netBalance.toFixed(2)}`;
+    document.getElementById('total-income').textContent = formatCurrency(totalIncome);
+    document.getElementById('total-expenses').textContent = formatCurrency(totalExpenses);
+    document.getElementById('net-balance').textContent = formatCurrency(netBalance);
     
     // Color code net balance
     const netBalanceElement = document.getElementById('net-balance');
@@ -159,18 +171,18 @@ function updateGoals() {
     const savingsGoal = totalIncome * 0.2;
 
     // Update needs
-    document.getElementById('needs-goal').textContent = `$${needsGoal.toFixed(2)}`;
-    document.getElementById('needs-actual').textContent = `$${needsTotal.toFixed(2)}`;
+    document.getElementById('needs-goal').textContent = formatCurrency(needsGoal);
+    document.getElementById('needs-actual').textContent = formatCurrency(needsTotal);
     document.getElementById('needs-percent').textContent = `${totalIncome > 0 ? ((needsTotal / totalIncome) * 100).toFixed(1) : 0}%`;
 
     // Update wants
-    document.getElementById('wants-goal').textContent = `$${wantsGoal.toFixed(2)}`;
-    document.getElementById('wants-actual').textContent = `$${wantsTotal.toFixed(2)}`;
+    document.getElementById('wants-goal').textContent = formatCurrency(wantsGoal);
+    document.getElementById('wants-actual').textContent = formatCurrency(wantsTotal);
     document.getElementById('wants-percent').textContent = `${totalIncome > 0 ? ((wantsTotal / totalIncome) * 100).toFixed(1) : 0}%`;
 
     // Update savings
-    document.getElementById('savings-goal').textContent = `$${savingsGoal.toFixed(2)}`;
-    document.getElementById('savings-actual').textContent = `$${savingsTotal.toFixed(2)}`;
+    document.getElementById('savings-goal').textContent = formatCurrency(savingsGoal);
+    document.getElementById('savings-actual').textContent = formatCurrency(savingsTotal);
     document.getElementById('savings-percent').textContent = `${totalIncome > 0 ? ((savingsTotal / totalIncome) * 100).toFixed(1) : 0}%`;
 
     // Update progress bars
@@ -223,9 +235,9 @@ function downloadPDF() {
     doc.text('Financial Summary', 20, 65);
     
     doc.setFontSize(12);
-    doc.text(`Total Income: $${totalIncome.toFixed(2)}`, 20, 80);
-    doc.text(`Total Expenses: $${totalExpenses.toFixed(2)}`, 20, 95);
-    doc.text(`Net Balance: $${netBalance.toFixed(2)}`, 20, 110);
+    doc.text(`Total Income: ${formatCurrency(totalIncome)}`, 20, 80);
+    doc.text(`Total Expenses: ${formatCurrency(totalExpenses)}`, 20, 95);
+    doc.text(`Net Balance: ${formatCurrency(netBalance)}`, 20, 110);
 
     // Income Details
     doc.setFontSize(14);
@@ -236,7 +248,7 @@ function downloadPDF() {
     
     if (incomeItems.length > 0) {
         incomeItems.forEach(item => {
-            doc.text(`• ${item.desc}: $${item.amount.toFixed(2)}`, 25, yPos);
+            doc.text(`• ${item.desc}: ${formatCurrency(item.amount)}`, 25, yPos);
             yPos += 15;
         });
     } else {
@@ -253,7 +265,7 @@ function downloadPDF() {
     doc.setFontSize(11);
     if (expenseItems.length > 0) {
         expenseItems.forEach(item => {
-            doc.text(`• ${item.desc} (${item.category}): $${item.amount.toFixed(2)}`, 25, yPos);
+            doc.text(`• ${item.desc} (${item.category}): ${formatCurrency(item.amount)}`, 25, yPos);
             yPos += 15;
         });
     } else {
@@ -272,11 +284,11 @@ function downloadPDF() {
     const wantsGoal = totalIncome * 0.3;
     const savingsGoal = totalIncome * 0.2;
 
-    doc.text(`Needs: $${needsTotal.toFixed(2)} / $${needsGoal.toFixed(2)} (${totalIncome > 0 ? ((needsTotal / totalIncome) * 100).toFixed(1) : 0}%)`, 25, yPos);
+    doc.text(`Needs: ${formatCurrency(needsTotal)} / ${formatCurrency(needsGoal)} (${totalIncome > 0 ? ((needsTotal / totalIncome) * 100).toFixed(1) : 0}%)`, 25, yPos);
     yPos += 15;
-    doc.text(`Wants: $${wantsTotal.toFixed(2)} / $${wantsGoal.toFixed(2)} (${totalIncome > 0 ? ((wantsTotal / totalIncome) * 100).toFixed(1) : 0}%)`, 25, yPos);
+    doc.text(`Wants: ${formatCurrency(wantsTotal)} / ${formatCurrency(wantsGoal)} (${totalIncome > 0 ? ((wantsTotal / totalIncome) * 100).toFixed(1) : 0}%)`, 25, yPos);
     yPos += 15;
-    doc.text(`Savings: $${savingsTotal.toFixed(2)} / $${savingsGoal.toFixed(2)} (${totalIncome > 0 ? ((savingsTotal / totalIncome) * 100).toFixed(1) : 0}%)`, 25, yPos);
+    doc.text(`Savings: ${formatCurrency(savingsTotal)} / ${formatCurrency(savingsGoal)} (${totalIncome > 0 ? ((savingsTotal / totalIncome) * 100).toFixed(1) : 0}%)`, 25, yPos);
 
     // Footer
     doc.setFontSize(10);

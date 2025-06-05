@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💰 Budgexis - Smart Budget Tracker</title>
+    <title>Budgexis - Smart Budget Tracker</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>💰 Budgexis - Smart Budget Tracker</h1>
+            <h1>Budgexis - Smart Budget Tracker</h1>
             <p id="current-month"></p>
         </div>
 
@@ -19,7 +19,7 @@
                 <h2>💰 Income</h2>
                 <div class="input-group">
                     <input type="text" id="income-desc" placeholder="Income source (e.g., Salary, Side hustle)">
-                    <input type="number" id="income-amount" placeholder="Amount" step="0.01">
+                    <input type="number" id="income-amount" placeholder="Amount" step="10" min="10">
                     <button class="add-btn" onclick="addIncome()">Add</button>
                 </div>
                 <div class="item-list-container">
@@ -31,7 +31,7 @@
                 <h2>💳 Expenses</h2>
                 <div class="input-group">
                     <input type="text" id="expense-desc" placeholder="Expense description">
-                    <input type="number" id="expense-amount" placeholder="Amount" step="0.01">
+                    <input type="number" id="expense-amount" placeholder="Amount" step="10" min="10">
                     <select id="expense-category">
                         <option value="needs">Needs</option>
                         <option value="wants">Wants</option>
@@ -52,15 +52,15 @@
                 <div class="summary-grid">
                     <div class="summary-card">
                         <h3>Total Income</h3>
-                        <div class="amount" id="total-income">$0.00</div>
+                        <div class="amount" id="total-income">₹0</div>
                     </div>
                     <div class="summary-card">
                         <h3>Total Expenses</h3>
-                        <div class="amount" id="total-expenses">$0.00</div>
+                        <div class="amount" id="total-expenses">₹0</div>
                     </div>
                     <div class="summary-card">
                         <h3>Net Balance</h3>
-                        <div class="amount" id="net-balance">$0.00</div>
+                        <div class="amount" id="net-balance">₹0</div>
                     </div>
                 </div>
             </div>
@@ -70,8 +70,8 @@
                 <div class="goals-grid">
                     <div class="goal-card needs">
                         <h3>Needs (50%)</h3>
-                        <p>Goal: <span id="needs-goal">$0.00</span></p>
-                        <p>Actual: <span id="needs-actual">$0.00</span></p>
+                        <p>Goal: <span id="needs-goal">₹0</span></p>
+                        <p>Actual: <span id="needs-actual">₹0</span></p>
                         <p>Percentage: <span id="needs-percent">0%</span></p>
                         <div class="progress-bar">
                             <div class="progress-fill needs" id="needs-progress"></div>
@@ -79,8 +79,8 @@
                     </div>
                     <div class="goal-card wants">
                         <h3>Wants (30%)</h3>
-                        <p>Goal: <span id="wants-goal">$0.00</span></p>
-                        <p>Actual: <span id="wants-actual">$0.00</span></p>
+                        <p>Goal: <span id="wants-goal">₹0</span></p>
+                        <p>Actual: <span id="wants-actual">₹0</span></p>
                         <p>Percentage: <span id="wants-percent">0%</span></p>
                         <div class="progress-bar">
                             <div class="progress-fill wants" id="wants-progress"></div>
@@ -88,8 +88,8 @@
                     </div>
                     <div class="goal-card savings">
                         <h3>Savings (20%)</h3>
-                        <p>Goal: <span id="savings-goal">$0.00</span></p>
-                        <p>Actual: <span id="savings-actual">$0.00</span></p>
+                        <p>Goal: <span id="savings-goal">₹0</span></p>
+                        <p>Actual: <span id="savings-actual">₹0</span></p>
                         <p>Percentage: <span id="savings-percent">0%</span></p>
                         <div class="progress-bar">
                             <div class="progress-fill savings" id="savings-progress"></div>
@@ -101,8 +101,8 @@
     </div>
 
     <footer class="footer">
-        <p>Built with ❤️ by <a href="https://linkedin.com/in/your-profile" target="_blank">Your Name</a></p>
-        <p><a href="https://linkedin.com/in/your-profile" target="_blank">Tell me how you felt about this product!</a></p>
+        <p>Built with ❤️ by <a href="https://linkedin.com/in/your-profile" target="_blank">Avadhut Noola</a></p>
+        <p><a href="https://www.linkedin.com/in/avadhut-noola" target="_blank">Tell me how you felt about this product!</a></p>
     </footer>
 
     <script src="script.js"></script>
