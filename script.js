@@ -198,7 +198,7 @@ function updateProgressBar(elementId, actual, goal) {
     progressBar.style.width = `${percentage}%`;
 }
 
-// Download PDF report
+// Download PDF report - IMPROVED VERSION
 function downloadPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -221,80 +221,179 @@ function downloadPDF() {
     const wantsTotal = expenseItems.filter(item => item.category === 'wants').reduce((sum, item) => sum + item.amount, 0);
     const savingsTotal = expenseItems.filter(item => item.category === 'savings').reduce((sum, item) => sum + item.amount, 0);
 
-    // PDF Header
-    doc.setFontSize(20);
-    doc.setTextColor(40, 40, 40);
-    doc.text('Monthly Budget Report', 20, 30);
+    // Fixed currency formatting function for PDF (removes ₹ symbol to avoid encoding issues)
+    function formatCurrencyForPDF(amount) {
+        return `Rs. ${amount.toLocaleString('en-IN')}`;
+    }
+
+    // Page settings
+    const pageHeight = 280; // Usable page height
+    const marginBottom = 30; // Bottom margin for footer
+    let yPos = 30; // Starting Y position
+
+    // Function to check if new page is needed
+    function checkPageBreak(requiredSpace) {
+        if (yPos + requiredSpace > pageHeight - marginBottom) {
+            doc.addPage();
+            yPos = 20; // Reset Y position for new page
+            return true;
+        }
+        return false;
+    }
+
+    // Function to add styled heading
+    function addStyledHeading(text, size, color = [0, 0, 0], underline = false) {
+        checkPageBreak(25);
+        doc.setFontSize(size);
+        doc.setTextColor(color[0], color[1], color[2]);
+        doc.setFont("helvetica", "bold");
+        doc.text(text, 20, yPos);
+        
+        if (underline) {
+            const textWidth = doc.getTextWidth(text);
+            doc.setDrawColor(color[0], color[1], color[2]);
+            doc.setLineWidth(0.5);
+            doc.line(20, yPos + 2, 20 + textWidth, yPos + 2);
+        }
+        
+        yPos += 15;
+    }
+
+    // Function to add normal text
+    function addText(text, size = 12, color = [0, 0, 0], bold = false) {
+        checkPageBreak(15);
+        doc.setFontSize(size);
+        doc.setTextColor(color[0], color[1], color[2]);
+        doc.setFont("helvetica", bold ? "bold" : "normal");
+        doc.text(text, 20, yPos);
+        yPos += 15;
+    }
+
+    // Function to add indented text
+    function addIndentedText(text, size = 11, color = [0, 0, 0]) {
+        checkPageBreak(15);
+        doc.setFontSize(size);
+        doc.setTextColor(color[0], color[1], color[2]);
+        doc.setFont("helvetica", "normal");
+        doc.text(text, 25, yPos);
+        yPos += 15;
+    }
+
+    // PDF Header with styling
+    addStyledHeading('MONTHLY BUDGET REPORT', 22, [52, 73, 94], true);
     
     doc.setFontSize(14);
-    doc.text(`${currentMonth} ${currentYear}`, 20, 45);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont("helvetica", "italic");
+    doc.text(`${currentMonth} ${currentYear}`, 20, yPos);
+    yPos += 25;
 
-    // Summary Section
-    doc.setFontSize(16);
-    doc.setTextColor(0, 0, 0);
-    doc.text('Financial Summary', 20, 65);
+    // Summary Section with styled header
+    addStyledHeading('FINANCIAL SUMMARY', 18, [41, 128, 185], true);
     
-    doc.setFontSize(12);
-    doc.text(`Total Income: ${formatCurrency(totalIncome)}`, 20, 80);
-    doc.text(`Total Expenses: ${formatCurrency(totalExpenses)}`, 20, 95);
-    doc.text(`Net Balance: ${formatCurrency(netBalance)}`, 20, 110);
+    // Summary with better formatting
+    addText(`Total Income: ${formatCurrencyForPDF(totalIncome)}`, 12, [46, 125, 50], true);
+    addText(`Total Expenses: ${formatCurrencyForPDF(totalExpenses)}`, 12, [231, 76, 60], true);
+    
+    // Net balance with color coding
+    const balanceColor = netBalance >= 0 ? [46, 125, 50] : [231, 76, 60];
+    addText(`Net Balance: ${formatCurrencyForPDF(netBalance)}`, 12, balanceColor, true);
+    
+    yPos += 10;
 
-    // Income Details
-    doc.setFontSize(14);
-    doc.text('Income Details', 20, 135);
-    
-    let yPos = 150;
-    doc.setFontSize(11);
+    // Income Details with styled header
+    addStyledHeading('INCOME DETAILS', 16, [46, 125, 50], true);
     
     if (incomeItems.length > 0) {
         incomeItems.forEach(item => {
-            doc.text(`• ${item.desc}: ${formatCurrency(item.amount)}`, 25, yPos);
-            yPos += 15;
+            addIndentedText(`• ${item.desc}: ${formatCurrencyForPDF(item.amount)}`);
         });
     } else {
-        doc.text('No income entries', 25, yPos);
-        yPos += 15;
+        addIndentedText('No income entries', 11, [128, 128, 128]);
     }
 
-    // Expense Details
     yPos += 10;
-    doc.setFontSize(14);
-    doc.text('Expense Details', 20, yPos);
-    yPos += 15;
 
-    doc.setFontSize(11);
+    // Expense Details with styled header
+    addStyledHeading('EXPENSE DETAILS', 16, [231, 76, 60], true);
+
     if (expenseItems.length > 0) {
-        expenseItems.forEach(item => {
-            doc.text(`• ${item.desc} (${item.category}): ${formatCurrency(item.amount)}`, 25, yPos);
-            yPos += 15;
+        // Group expenses by category for better organization
+        const expensesByCategory = {
+            needs: expenseItems.filter(item => item.category === 'needs'),
+            wants: expenseItems.filter(item => item.category === 'wants'),
+            savings: expenseItems.filter(item => item.category === 'savings')
+        };
+
+        // Display expenses by category
+        Object.keys(expensesByCategory).forEach(category => {
+            if (expensesByCategory[category].length > 0) {
+                const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+                addText(`${categoryName}:`, 12, [0, 0, 0], true);
+                
+                expensesByCategory[category].forEach(item => {
+                    addIndentedText(`• ${item.desc}: ${formatCurrencyForPDF(item.amount)}`);
+                });
+                yPos += 5;
+            }
         });
     } else {
-        doc.text('No expense entries', 25, yPos);
-        yPos += 15;
+        addIndentedText('No expense entries', 11, [128, 128, 128]);
     }
 
-    // Budget Goals Analysis
     yPos += 10;
-    doc.setFontSize(14);
-    doc.text('Budget Goals Analysis (50/30/20 Rule)', 20, yPos);
-    yPos += 15;
 
-    doc.setFontSize(11);
+    // Budget Goals Analysis with styled header
+    addStyledHeading('BUDGET GOALS ANALYSIS (50/30/20 Rule)', 16, [255, 152, 0], true);
+
     const needsGoal = totalIncome * 0.5;
     const wantsGoal = totalIncome * 0.3;
     const savingsGoal = totalIncome * 0.2;
 
-    doc.text(`Needs: ${formatCurrency(needsTotal)} / ${formatCurrency(needsGoal)} (${totalIncome > 0 ? ((needsTotal / totalIncome) * 100).toFixed(1) : 0}%)`, 25, yPos);
-    yPos += 15;
-    doc.text(`Wants: ${formatCurrency(wantsTotal)} / ${formatCurrency(wantsGoal)} (${totalIncome > 0 ? ((wantsTotal / totalIncome) * 100).toFixed(1) : 0}%)`, 25, yPos);
-    yPos += 15;
-    doc.text(`Savings: ${formatCurrency(savingsTotal)} / ${formatCurrency(savingsGoal)} (${totalIncome > 0 ? ((savingsTotal / totalIncome) * 100).toFixed(1) : 0}%)`, 25, yPos);
+    // Needs analysis
+    const needsPercentage = totalIncome > 0 ? ((needsTotal / totalIncome) * 100).toFixed(1) : 0;
+    addText(`Needs (50% Goal):`, 12, [0, 0, 0], true);
+    addIndentedText(`Target: ${formatCurrencyForPDF(needsGoal)}`);
+    addIndentedText(`Actual: ${formatCurrencyForPDF(needsTotal)} (${needsPercentage}%)`);
+    addIndentedText(`Status: ${needsTotal <= needsGoal ? 'Within Budget' : 'Over Budget'}`, 11, needsTotal <= needsGoal ? [46, 125, 50] : [231, 76, 60]);
+    
+    yPos += 5;
 
-    // Footer
-    doc.setFontSize(10);
-    doc.setTextColor(128, 128, 128);
-    doc.text(`Generated on ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`, 20, 280);
-    doc.text('Created with Monthly Budget Tracker', 20, 290);
+    // Wants analysis
+    const wantsPercentage = totalIncome > 0 ? ((wantsTotal / totalIncome) * 100).toFixed(1) : 0;
+    addText(`Wants (30% Goal):`, 12, [0, 0, 0], true);
+    addIndentedText(`Target: ${formatCurrencyForPDF(wantsGoal)}`);
+    addIndentedText(`Actual: ${formatCurrencyForPDF(wantsTotal)} (${wantsPercentage}%)`);
+    addIndentedText(`Status: ${wantsTotal <= wantsGoal ? 'Within Budget' : 'Over Budget'}`, 11, wantsTotal <= wantsGoal ? [46, 125, 50] : [231, 76, 60]);
+    
+    yPos += 5;
+
+    // Savings analysis
+    const savingsPercentage = totalIncome > 0 ? ((savingsTotal / totalIncome) * 100).toFixed(1) : 0;
+    addText(`Savings (20% Goal):`, 12, [0, 0, 0], true);
+    addIndentedText(`Target: ${formatCurrencyForPDF(savingsGoal)}`);
+    addIndentedText(`Actual: ${formatCurrencyForPDF(savingsTotal)} (${savingsPercentage}%)`);
+    addIndentedText(`Status: ${savingsTotal >= savingsGoal ? 'Goal Achieved' : 'Below Goal'}`, 11, savingsTotal >= savingsGoal ? [46, 125, 50] : [231, 76, 60]);
+
+    // Footer - Always at the bottom of the last page
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        
+        // Add page number
+        doc.setFontSize(10);
+        doc.setTextColor(128, 128, 128);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Page ${i} of ${totalPages}`, 180, 285);
+        
+        // Add footer only on last page
+        if (i === totalPages) {
+            doc.setFontSize(10);
+            doc.setTextColor(128, 128, 128);
+            doc.text(`Generated on ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`, 20, 285);
+            doc.text('Created with Monthly Budget Tracker by Avadhut Noola', 20, 295);
+        }
+    }
 
     // Save the PDF
     doc.save(`Budget-Report-${currentMonth}-${currentYear}.pdf`);
